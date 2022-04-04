@@ -1,0 +1,170 @@
+#include <stdio.h>
+#define MAX_SECTORS 40
+#define SECTOR_SIZE 500
+char sectors[MAX_SECTORS];
+
+char stored[MAX_SECTORS][MAX_SECTORS + 1];
+int stored_size = 0;
+
+void initialize() {
+for(int i = 0; i < MAX_SECTORS; i++) {
+sectors[i] = ' ';
+}
+for(int i = 0; i < MAX_SECTORS; i++) {
+stored[i][0] = ' ';
+}
+}
+
+int canAllocateContiguously(int sectors_required) {
+int contiguous_count = 0;
+for(int i = 0; i < MAX_SECTORS; i++) {
+if(sectors[i] == ' ') {
+contiguous_count++;
+}
+else{
+contiguous_count = 0;
+}
+  
+if(contiguous_count == sectors_required) {
+return i - sectors_required + 1;
+}
+}
+return -1;
+}
+
+int canAllocateNonContiguously(int sectors_required) {
+int count = 0;
+for(int i = 0; i < MAX_SECTORS; i++) {
+if(sectors[i] == ' ') {
+count++;
+}
+}
+if(count >= sectors_required) {
+return 1;
+}
+return 0;
+}
+
+int getNextSlot(int begin) {
+while(begin < MAX_SECTORS && sectors[begin] != ' ') {
+begin++;
+}
+if(begin == MAX_SECTORS) {
+return -1;
+}
+else {
+return begin;
+}
+}
+
+void addItem() {
+char file;
+int size;
+int i, previous_slot, next_slot;
+printf("Enter the file name (single character) : ");
+scanf("%s", &file);
+printf("Enter the size of the file (1-3300 bytes): ");
+scanf("%d", &size);
+int sectors_required = size / SECTOR_SIZE;
+if(size % SECTOR_SIZE != 0) {
+sectors_required += 1;
+}
+  
+stored[stored_size][0] = file;
+int start = canAllocateContiguously(sectors_required);
+if(start != -1) {
+for(i = 0; i < sectors_required; i++) {
+sectors[start + i] = file;
+stored[stored_size][i + 1] = start + i;
+}
+stored[stored_size][i + 1] = ' ';
+stored_size++;
+printf("File has been added!\n");
+}
+else if(canAllocateNonContiguously(sectors_required)){
+previous_slot = -1;
+for(i = 0; i < sectors_required; i++) {
+next_slot = getNextSlot(previous_slot + 1);
+sectors[next_slot] = file;
+stored[stored_size][i + 1] = next_slot;
+}
+stored[stored_size][i + 1] = ' ';
+stored_size++;
+printf("File has been added!\n");
+}
+else {
+printf("File cannot be allocated!\n");
+}
+}
+
+void removeItem() {
+char file;
+int i, sector_index;
+printf("Enter the file name (single character) : ");
+scanf("%s", &file);
+int stored_index = -1;
+for(i = 0; i < stored_size; i++) {
+if(stored[i][0] == file) {
+stored_index = i;
+break;
+}
+}
+  
+if(stored_index == -1) {
+printf("File not found!\n");
+return;
+}
+  
+i = 1;
+sector_index = stored[stored_index][i];
+while(sector_index != ' ') {
+sectors[sector_index] = ' ';
+i++;
+sector_index = stored[stored_index][i];
+}
+  
+printf("File has been removed!\n");
+}
+
+void showSectors() {
+for(int i = 0; i < MAX_SECTORS; i++) {
+printf("%-3c", sectors[i]);
+}
+printf("\n");
+for(int i = 0; i < MAX_SECTORS; i++) {
+printf("%-3d", i);
+}
+printf("\n");
+}
+
+int main() {
+int choice;
+initialize();
+  
+do {
+printf("\n1. Add an item\n"
+"2. Remove an item\n"
+"3. Show sectors\n"
+"4. Exit the program\n"
+"Your choice: ");
+scanf("%d", &choice);
+  
+switch(choice) {
+case 1:
+addItem();
+break;
+case 2:
+removeItem();
+break;
+case 3:
+showSectors();
+break;
+case 4:
+printf("bye!\n");
+break;
+default:
+printf("Invalid choice!\n");
+}
+}while(choice != 4);
+return 0;
+}
